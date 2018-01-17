@@ -29,6 +29,7 @@ VL53L0X_RangingMeasurementData_t rightSensor;
 uint16_t backMeasure;
 uint16_t leftMeasure;
 uint16_t rightMeasure;
+\
 
 
 void setup() {
@@ -126,7 +127,7 @@ if( leftSpeed == 0 && rightSpeed == 0 ) {
   rightSpeed = 100;
 }
 
-if( leftSpeed > 100) {
+if( leftSpeed > 100 || rightSpeed > 100) {
   leftMotor->setSpeed(100);
   rightMotor->setSpeed(100);
   leftSpeed = 100;
@@ -162,18 +163,39 @@ if( leftSpeed > 100) {
  if (rightMeasure < 100 && leftMeasure < 100 && leftSensor.RangeStatus != 4 && rightSensor.RangeStatus != 4) {
     Serial.print("I need to pivot!");
     while(rightMeasure < 100 && leftMeasure < 100) {
+      leftMotor->run(RELEASE);
+      rightMotor->run(RELEASE);  
+      leftMotor->run(FORWARD);
+      rightMotor->run(FORWARD);
+      left.rangingTest(&leftSensor, false);
+      leftMeasure = leftSensor.RangeMilliMeter;
+  
+      right.rangingTest(&rightSensor, false);
+      rightMeasure = rightSensor.RangeMilliMeter; 
+    }
+    delay(200);
     leftMotor->run(RELEASE);
-    rightMotor->run(RELEASE);  
-    leftMotor->run(FORWARD);
-    rightMotor->run(FORWARD); }
+    rightMotor->run(RELEASE);
+    leftMotor->run(BACKWARD);
+    rightMotor->run(FORWARD);
+    leftSpeed = 0;
+    rightSpeed = 0;
   }
-  else if (leftMeasure < 100 && leftSensor.RangeStatus != 4) {
+  else if (leftMeasure < 200 && leftSensor.RangeStatus != 4) {
     Serial.print("I need to turn right!");
-    leftMotor->setSpeed(i += 20);
+    rightSpeed = 60;
+    leftSpeed = 200;
+    leftMotor->setSpeed(leftSpeed);
+    rightMotor->setSpeed(rightSpeed);
+    delay(100);
   }
-  else if (rightMeasure < 100 && rightSensor.RangeStatus != 4) {
+  else if (rightMeasure < 200 && rightSensor.RangeStatus != 4) {
     Serial.print("I need to turn left!");
-    rightMotor->setSpeed(i += 20);
+    leftSpeed = 60;
+    rightSpeed = 200;
+    rightMotor->setSpeed(rightSpeed);
+    leftMotor->setSpeed(leftSpeed);
+    delay(100);
   } 
   
   
