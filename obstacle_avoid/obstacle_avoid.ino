@@ -11,9 +11,15 @@ Adafruit_VL53L0X right = Adafruit_VL53L0X();
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *myMotor = AFMS.getMotor(1);
+Adafruit_DCMotor *leftMotor = AFMS.getMotor(1);
 // You can also make another motor on port M2
-Adafruit_DCMotor *myOtherMotor = AFMS.getMotor(2);
+Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
+
+//set variable for speed iteration
+uint8_t i;
+uint8_t leftSpeed;
+uint8_t rightSpeed;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -24,15 +30,15 @@ void setup() {
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
   
   // Set the speed to start, from 0 (off) to 255 (max speed)
-  myMotor->setSpeed(150);
-  myMotor->run(FORWARD);
+  leftMotor->setSpeed(150);
+  leftMotor->run(FORWARD);
   // turn on motor
-  myMotor->run(RELEASE);
+  leftMotor->run(RELEASE);
 
-  myOtherMotor->setSpeed(150);
-  myOtherMotor->run(FORWARD);
+  rightMotor->setSpeed(150);
+  rightMotor->run(FORWARD);
   // turn on motor
-  myOtherMotor->run(RELEASE);
+  rightMotor->run(RELEASE);
 
   //Sensor Setup
 
@@ -90,19 +96,22 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  uint8_t i;
-  VL53L0X_RangingMeasurementData_t sensor;
+  
+  VL53L0X_RangingMeasurementData_t backSensor;
+  VL53L0X_RangingMeasurementData_t leftSensor;
+  VL53L0X_RangingMeasurementData_t rightSensor;
 //  
   Serial.print("Forward?");
 //
 //  // gets current uptime on microcontroller in millis
 //  unsigned long currentMillis = millis();
 //
-  myMotor->run(BACKWARD);
-  myOtherMotor->run(FORWARD);
-  for (i=0; i<100; i++) {
-    myMotor->setSpeed(i);
-    myOtherMotor->setSpeed(i);  
+if( i < 100 ) 
+  leftMotor->run(BACKWARD);
+  rightMotor->run(FORWARD);
+  for (i; i<100; i++) {
+    leftMotor->setSpeed(i);
+    rightMotor->setSpeed(i);  
     delay(10);
   }
 
@@ -113,67 +122,67 @@ void loop() {
   // measure = sensor.RangeMilliMeter;
 
    //boolean checks if an object is getting close to sensor
-  back.rangingTest(&sensor, false);
+  back.rangingTest(&backSensor, false);
   backMeasure = sensor.RangeMilliMeter;
  
 
-  left.rangingTest(&sensor, false);
+  left.rangingTest(&leftSensor, false);
   leftMeasure = sensor.RangeMilliMeter;
   
-  right.rangingTest(&sensor, false);
+  right.rangingTest(&rightSensor, false);
   rightMeasure = sensor.RangeMilliMeter;
   
-  if (backMeasure < 100 && sensor.RangeStatus != 4) {
+  if (backMeasure < 100 && backSensor.RangeStatus != 4) {
     Serial.print("I need to move forward faster!");
-    myMotor->run(BACKWARD);
-    myOtherMotor->run(FORWARD);
+    leftMotor->run(BACKWARD);
+    rightMotor->run(FORWARD);
     for (i=100; i<200; i++) {
-      myMotor->setSpeed(i);
-      myOtherMotor->setSpeed(i);  
+      leftMotor->setSpeed(i);
+      rightMotor->setSpeed(i);  
       delay(10);
     } 
   }
-  else if (leftMeasure < 100 && sensor.RangeStatus != 4) {
+  else if (leftMeasure < 100 && leftSensor.RangeStatus != 4) {
     Serial.print("I need to turn right!");
-    myMotor->setSpeed(i += 20);
+    leftMotor->setSpeed(i += 20);
   }
-  else if (rightMeasure < 100 && sensor.RangeStatus != 4) {
+  else if (rightMeasure < 100 && rightSensor.RangeStatus != 4) {
     Serial.print("I need to turn left!");
-    myOtherMotor->setSpeed(i += 20);
+    rightMotor->setSpeed(i += 20);
   } 
-  else if (rightMeasure < 100 && leftMeasure < 100 && sensor.RangeStatus != 4) {
+  else if (rightMeasure < 100 && leftMeasure < 100 && leftSensor.RangeStatus != 4 && rightSensor.RangeStatus != 4) {
     Serial.print("I need to pivot!");
     while(rightMeasure < 100 && leftMeasure < 100) {
-    myMotor->run(RELEASE);
-    myOtherMotor->run(RELEASE);  
-    myMotor->run(FORWARD);
-    myOtherMotor->run(FORWARD); }
+    leftMotor->run(RELEASE);
+    rightMotor->run(RELEASE);  
+    leftMotor->run(FORWARD);
+    rightMotor->run(FORWARD); }
   }
   
 //  for (i=255; i!=0; i--) {
-//    myMotor->setSpeed(i);
-//    myOtherMotor->setSpeed(i);  
+//    leftMotor->setSpeed(i);
+//    rightMotor->setSpeed(i);  
 //    delay(10);
 //  }
 //  
 //  Serial.print("tock-forward");
 //
-//  myMotor->run(BACKWARD);
-//  myOtherMotor->run(FORWARD);
+//  leftMotor->run(BACKWARD);
+//  rightMotor->run(FORWARD);
 //  for (i=0; i<255; i++) {
-//    myMotor->setSpeed(i);
-//    myOtherMotor->setSpeed(i);  
+//    leftMotor->setSpeed(i);
+//    rightMotor->setSpeed(i);  
 //    delay(10);
 //  }
 //  for (i=255; i!=0; i--) {
-//    myMotor->setSpeed(i);
-//    myOtherMotor->setSpeed(i);  
+//    leftMotor->setSpeed(i);
+//    rightMotor->setSpeed(i);  
 //    delay(10);
 //  }
 //
 //  Serial.print("tech");
-//  myMotor->run(RELEASE);
-//  myOtherMotor->run(RELEASE);
+//  leftMotor->run(RELEASE);
+//  rightMotor->run(RELEASE);
 //  delay(1000); 
 
 
