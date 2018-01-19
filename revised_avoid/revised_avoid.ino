@@ -73,7 +73,7 @@ void turns() {
     Serial.print("I'm gonna pivot!");
     pivot();
   } 
-  else if (leftMeasure < 250 && leftSensor.RangeStatus != 4) {
+  else if (leftMeasure < 300 && leftSensor.RangeStatus != 4 && leftSpeed >= 50 && rightSpeed >= 50) {
     Serial.print("I'm gonna turn left!");
     if(leftSpeed < 150) {
     leftSpeed = leftSpeed + 2; 
@@ -84,7 +84,7 @@ void turns() {
     leftMotor->setSpeed(leftSpeed);
     rightMotor->setSpeed(rightSpeed);
   }
-  else if (rightMeasure < 250 && rightSensor.RangeStatus != 4) {
+  else if (rightMeasure < 300 && rightSensor.RangeStatus != 4 && leftSpeed >= 50 && rightSpeed >= 50) {
     if(rightSpeed < 150) {
     Serial.print("I'm gonna turn right!");
     rightSpeed = rightSpeed + 2;
@@ -287,9 +287,9 @@ void loop() {
 //    rightMotor->run(FORWARD);
 //    leftSpeed = 0;
 //    rightSpeed = 0;
-   turns();
+   pivot();
   }
-  else if (leftMeasure < 200 && leftSensor.RangeStatus != 4 && leftSpeed >= 50 && rightSpeed >= 50) {
+  else if (leftMeasure < 300 && leftSensor.RangeStatus != 4 && leftSpeed >= 50 && rightSpeed >= 50) {
     Serial.print("I need to turn right!");
     turns();
 //    rightSpeed = 60;
@@ -298,7 +298,7 @@ void loop() {
 //    rightMotor->setSpeed(rightSpeed);
 //    delay(100);
   }
-  else if (rightMeasure < 200 && rightSensor.RangeStatus != 4 && rightSpeed >= 50 && leftSpeed >= 50) {
+  else if (rightMeasure < 300 && rightSensor.RangeStatus != 4 && rightSpeed >= 50 && leftSpeed >= 50) {
     Serial.print("I need to turn left!");
     turns();
 //    leftSpeed = 60;
