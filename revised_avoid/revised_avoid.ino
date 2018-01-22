@@ -19,10 +19,12 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 uint8_t i = 0;
 uint8_t leftSpeed = 0;
 uint8_t rightSpeed = 0;
+uint8_t targetSpeed = 100;
 
 //set variables for escape behavior
 uint8_t stalkCount = 0;
 uint16_t previousBackMeasure = 1000;
+unsigned long escapeMillis;
 
 
 //set variable types for sensors
@@ -32,29 +34,33 @@ VL53L0X_RangingMeasurementData_t leftSensor;
 VL53L0X_RangingMeasurementData_t rightSensor;
 
 uint16_t backMeasure;
+uint16_t backMeasureTwo;
+uint16_t backMeasureThree;
 uint16_t leftMeasure;
 uint16_t rightMeasure; 
 
 void escape() {
-  while (leftSpeed < 253 || rightSpeed < 253) {
-  if (leftSpeed < 253) {
-    leftSpeed = leftSpeed + 2;
-  }
-  if (rightSpeed < 253) {
-    rightSpeed = rightSpeed + 2;
-  }
-  leftMotor->setSpeed(leftSpeed);
-  rightMotor->setSpeed(rightSpeed);
-  }
-  delay(5000);
+//  while (leftSpeed < 253 || rightSpeed < 253) {
+//  if (leftSpeed < 253) {
+//    leftSpeed = leftSpeed + 2;
+//  }
+//  if (rightSpeed < 253) {
+//    rightSpeed = rightSpeed + 2;
+//  }
+//  leftMotor->setSpeed(leftSpeed);
+//  rightMotor->setSpeed(rightSpeed);
+//  }
+//  delay(5000);
+targetSpeed = 254;
+escapeMillis = millis();
 }
 
 void pivot() {
   leftMotor->run(RELEASE);
   rightMotor->run(RELEASE);
   delay(100);
-  leftMotor->setSpeed(100);
-  rightMotor->setSpeed(100);
+  leftMotor->setSpeed(targetSpeed);
+  rightMotor->setSpeed(targetSpeed);
  while(rightMeasure < 150 || leftMeasure < 150) {
         
       leftMotor->run(FORWARD);
@@ -94,21 +100,21 @@ void turns() {
   } 
   else if (leftMeasure < 300 && leftSensor.RangeStatus != 4 && leftSpeed >= 50 && rightSpeed >= 50) {
     Serial.print("I'm gonna turn left!");
-    if(leftSpeed < 150) {
+    if(leftSpeed < targetSpeed + 50 && leftSpeed < 254) {
     leftSpeed = leftSpeed + 2; 
     } 
-    if(rightSpeed > 50) {
+    if(rightSpeed > targetSpeed - 100 && rightSpeed > 1) {
     rightSpeed = rightSpeed - 2;
     }
     leftMotor->setSpeed(leftSpeed);
     rightMotor->setSpeed(rightSpeed);
   }
   else if (rightMeasure < 300 && rightSensor.RangeStatus != 4 && leftSpeed >= 50 && rightSpeed >= 50) {
-    if(rightSpeed < 150) {
+    if(rightSpeed < targetSpeed + 50 && rightSpeed < 254) {
     Serial.print("I'm gonna turn right!");
     rightSpeed = rightSpeed + 2;
     }
-    if(leftSpeed > 50) {
+    if(leftSpeed > targetSpeed - 100 && leftSpeed > 1) {
     leftSpeed = leftSpeed - 2;
     }
     leftMotor->setSpeed(leftSpeed);
@@ -122,16 +128,16 @@ void turns() {
 void forward(){
   leftMotor->run(BACKWARD);
   rightMotor->run(FORWARD);
-while(leftSpeed != 100 || rightSpeed !=100) {
-  if(leftSpeed < 100) {
+while(leftSpeed != targetSpeed || rightSpeed != targetSpeed) {
+  if(leftSpeed < targetSpeed) {
     leftSpeed = leftSpeed + 2;
-  } else if(leftSpeed >100) {
+  } else if(leftSpeed > targetSpeed) {
     leftSpeed = leftSpeed -2;
   }
-  if(rightSpeed <100) {
+  if(rightSpeed < targetSpeed) {
     rightSpeed = rightSpeed + 2;
     
-  } else if(rightSpeed > 100) {
+  } else if(rightSpeed > targetSpeed) {
     rightSpeed = rightSpeed - 2;
   }
   leftMotor->setSpeed(leftSpeed);
@@ -142,7 +148,18 @@ while(leftSpeed != 100 || rightSpeed !=100) {
 
 void checkSensors() {
   back.rangingTest(&backSensor, false);
-  backMeasure = backSensor.RangeMilliMeter;
+   
+  if(backSensor.RangeStatus != 4) {
+    backMeasureThree = backMeasureTwo;
+    backMeasureTwo = backMeasure;
+    backMeasure = backSensor.RangeMilliMeter;
+  } 
+  else {
+    backMeasureThree = 600;
+    backMeasureTwo = 600;
+    backMeasure = 600;
+  }
+  
  
 
   left.rangingTest(&leftSensor, false);
@@ -284,15 +301,24 @@ void loop() {
 //      delay(10);
 //    }
 
- checkSensors();
- if (backMeasure < previousBackMeasure) {
-  stalkCount += 1;
-  previousBackMeasure = backMeasure;
+ if ( millis() > escapeMillis + 5000 && targetSpeed == 254) {
+  targetSpeed = 100;
  }
- if (stalkCount == 4) {
-  stalkCount = 0;
+ 
+ checkSensors();
+
+ if (backMeasure < ((backMeasureTwo + backMeasureThree) / 2)) {
   escape();
  }
+ 
+// if (backMeasure < previousBackMeasure) {
+//  stalkCount += 1;
+//  previousBackMeasure = backMeasure;
+// }
+// if (stalkCount == 4) {
+//  stalkCount = 0;
+//  escape();
+// }
  
  if (rightMeasure < 100 && leftMeasure < 100 && leftSensor.RangeStatus != 4 && rightSensor.RangeStatus != 4) {
     Serial.print("I need to pivot!");
