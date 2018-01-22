@@ -20,6 +20,11 @@ uint8_t i = 0;
 uint8_t leftSpeed = 0;
 uint8_t rightSpeed = 0;
 
+//set variables for escape behavior
+uint8_t stalkCount = 0;
+uint16_t previousBackMeasure = 1000;
+
+
 //set variable types for sensors
 
 VL53L0X_RangingMeasurementData_t backSensor;
@@ -28,7 +33,21 @@ VL53L0X_RangingMeasurementData_t rightSensor;
 
 uint16_t backMeasure;
 uint16_t leftMeasure;
-uint16_t rightMeasure;
+uint16_t rightMeasure; 
+
+void escape() {
+  while (leftSpeed < 253 || rightSpeed < 253) {
+  if (leftSpeed < 253) {
+    leftSpeed = leftSpeed + 2;
+  }
+  if (rightSpeed < 253) {
+    rightSpeed = rightSpeed + 2;
+  }
+  leftMotor->setSpeed(leftSpeed);
+  rightMotor->setSpeed(rightSpeed);
+  }
+  delay(5000);
+}
 
 void pivot() {
   leftMotor->run(RELEASE);
@@ -266,6 +285,14 @@ void loop() {
 //    }
 
  checkSensors();
+ if (backMeasure < previousBackMeasure) {
+  stalkCount += 1;
+  previousBackMeasure = backMeasure;
+ }
+ if (stalkCount == 4) {
+  stalkCount = 0;
+  escape();
+ }
  
  if (rightMeasure < 100 && leftMeasure < 100 && leftSensor.RangeStatus != 4 && rightSensor.RangeStatus != 4) {
     Serial.print("I need to pivot!");
